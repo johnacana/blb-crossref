@@ -13,11 +13,11 @@ def get_crossref_url(book, chapter, verse):
         return None
 
     soup = BeautifulSoup(response.text, "html.parser")
-    tools = soup.find_all("a", href=True)
+    anchors = soup.select('a[href*="t_corr_"]')
 
-    for link in tools:
-        href = link["href"]
-        if "t_corr_" in href:
+    for a in anchors:
+        href = a.get("href")
+        if href and "t_corr_" in href:
             return "https://www.blueletterbible.org" + href
 
     return None
@@ -26,7 +26,10 @@ def get_crossref_url(book, chapter, verse):
 def get_crossref():
     verse = request.args.get("verse", "")
     try:
-        book, chapter, verse_num = verse.lower().split()
+        parts = verse.lower().replace(":", "").split()
+        if len(parts) != 3:
+            return jsonify({"error": "Invalid verse format"}), 400
+        book, chapter, verse_num = parts
         book_abbrev = book[:3]
         url = get_crossref_url(book_abbrev, chapter, verse_num)
         if url:
